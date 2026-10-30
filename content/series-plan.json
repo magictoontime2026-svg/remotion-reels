@@ -1,0 +1,38 @@
+{
+	"primarySeries": {
+		"title": "Stories That Stay",
+		"episodes": [
+			{"episode": 1, "title": "The Porch Light", "hook": "At 17, he said, “Don’t wait up, Mom.”"},
+			{"episode": 2, "title": "The Lunchbox Note", "hook": "He found a note from his mom in the lunch he packed himself."},
+			{"episode": 3, "title": "The Shoes by the Door", "hook": "She kept his old sneakers exactly where he left them."},
+			{"episode": 4, "title": "The Umbrella", "hook": "He was grown when he noticed she was still getting wet for him."},
+			{"episode": 5, "title": "One More Story", "hook": "He used to ask for one more story. Then one day, he was too busy."},
+			{"episode": 6, "title": "The Missed Call", "hook": "He almost ignored her call. Then he heard why she called."},
+			{"episode": 7, "title": "His First Paycheck", "hook": "The first thing he bought with his own money was for her."},
+			{"episode": 8, "title": "The Blue Mug", "hook": "She saved the chipped mug because it was his favorite."},
+			{"episode": 9, "title": "The School Photo", "hook": "She still kept the picture he hated taking."},
+			{"episode": 10, "title": "The Long Drive", "hook": "He thought the quiet car ride meant she had nothing to say."},
+			{"episode": 11, "title": "The Empty Room", "hook": "His childhood room changed. One thing never did."},
+			{"episode": 12, "title": "The Voice Message", "hook": "He saved her ordinary voice message for an extraordinary reason."},
+			{"episode": 13, "title": "Learning to Text", "hook": "Her message had six spelling mistakes and one perfect question."},
+			{"episode": 14, "title": "The Broken Toy", "hook": "He brought home the kind of problem she used to fix with tape."},
+			{"episode": 15, "title": "Sunday Call", "hook": "Their Sunday calls were short—until one of them wasn’t."},
+			{"episode": 16, "title": "A Place at the Table", "hook": "She set one extra plate, even when he said he might not come."},
+			{"episode": 17, "title": "The Recipe", "hook": "He finally asked how she made the dish he had loved all his life."},
+			{"episode": 18, "title": "The Unsent Letter", "hook": "While packing, he found the letter she never meant him to read."},
+			{"episode": 19, "title": "Walking Beside Her", "hook": "One day, he noticed she was walking a little slower."},
+			{"episode": 20, "title": "His Turn to Leave the Light On", "hook": "This time, she was the one coming home late."}
+		]
+	},
+	"followUpSeries": {
+		"title": "Love Before Likes",
+		"premise": "Original, 1990s-inspired love stories told through letters, landlines, mixtapes, and missed connections.",
+		"ideas": [
+			{"title": "The Cassette Tape", "hook": "He recorded her favorite song, but left the last ten seconds blank."},
+			{"title": "One Phone at Home", "hook": "They had one chance to talk before her family returned."},
+			{"title": "The Library Note", "hook": "She found his reply tucked inside the same book a week later."},
+			{"title": "The Missed Bus", "hook": "He missed the bus on purpose. She knew, but never told him."},
+			{"title": "The Photo Booth Strip", "hook": "Four tiny pictures survived a love story no one expected to end."}
+		]
+	}
+}

@@ -1,0 +1,94 @@
+name: Daily Instagram Reel
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to Instagram after rendering (leave unchecked for a preview)
+        required: true
+        type: boolean
+        default: false
+  schedule:
+    - cron: '30 13 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daily-reel
+  cancel-in-progress: false
+
+jobs:
+  create-and-publish:
+    if: github.event_name == 'workflow_dispatch' || (vars.AUTO_PUBLISH_ENABLED == 'true' && vars.PILOT_APPROVED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+      IG_USER_ID: ${{ secrets.IG_USER_ID }}
+      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      META_GRAPH_API_VERSION: ${{ vars.META_GRAPH_API_VERSION }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_PUBLIC_BASE_URL: ${{ vars.R2_PUBLIC_BASE_URL }}
+      EPISODE_START_DATE: ${{ vars.EPISODE_START_DATE }}
+      SHOULD_PUBLISH: ${{ (github.event_name == 'schedule' && vars.AUTO_PUBLISH_ENABLED == 'true' || inputs.publish == true) && vars.PILOT_APPROVED == 'true' }}
+    steps:
+      - name: Require pilot approval for publishing
+        if: github.event_name == 'workflow_dispatch' && inputs.publish == true && vars.PILOT_APPROVED != 'true'
+        run: |
+          echo "Publishing is blocked until the pilot has been reviewed and PILOT_APPROVED is true."
+          exit 1
+
+      - name: Check out content
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate original story and social copy
+        run: node scripts/generate-episode.mjs
+
+      - name: Select approved BGM and render props
+        run: node scripts/prepare-render.mjs
+
+      - name: Render vertical Reel
+        run: npx remotion render src/index.tsx StoriesThatStay out/reel.mp4 --props out/render-props.json
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reel-${{ github.run_id }}
+          path: |
+            out/reel.mp4
+            out/episode.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Reel to Cloudflare R2
+        if: env.SHOULD_PUBLISH == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          episode_date=$(node -p "JSON.parse(require('node:fs').readFileSync('out/episode.json', 'utf8')).date")
+          episode_number=$(node -p "JSON.parse(require('node:fs').readFileSync('out/episode.json', 'utf8')).episode")
+          object_key="reels/${episode_date}-episode-$(printf '%03d' "${episode_number}").mp4"
+          aws s3 cp out/reel.mp4 "s3://${R2_BUCKET}/${object_key}" \
+            --endpoint-url "https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com" \
+            --content-type video/mp4 \
+            --no-progress
+
+      - name: Publish to Instagram
+        if: env.SHOULD_PUBLISH == 'true'
+        run: node scripts/publish-instagram.mjs

@@ -1,0 +1,26 @@
+{
+	"name": "stories-that-stay-reels",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"render": "remotion render src/index.tsx StoriesThatStay out/reel.mp4",
+		"generate": "node scripts/generate-episode.mjs",
+		"prepare:render": "node scripts/prepare-render.mjs",
+		"publish": "node scripts/publish-instagram.mjs"
+	},
+	"dependencies": {
+		"@remotion/cli": "4.0.539",
+		"@remotion/media": "4.0.539",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"remotion": "4.0.539"
+	},
+	"devDependencies": {
+		"@types/react": "19.1.8",
+		"typescript": "5.9.3"
+	},
+	"overrides": {
+		"zod": "^4.6.7"
+	}
+}
