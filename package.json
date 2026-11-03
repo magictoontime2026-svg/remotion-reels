@@ -7,7 +7,8 @@
 		"render": "remotion render src/index.tsx StoriesThatStay out/reel.mp4",
 		"generate": "node scripts/generate-episode.mjs",
 		"prepare:render": "node scripts/prepare-render.mjs",
-		"publish": "node scripts/publish-instagram.mjs"
+		"deliver": "node scripts/deliver-to-google.mjs",
+		"setup:google": "node scripts/setup-google.mjs"
 	},
 	"dependencies": {
 		"@remotion/cli": "4.0.539",

@@ -1,15 +1,14 @@
-# Stories That Stay — Reel automation
+# Stories That Stay — Reel delivery
 
 This private repository prepares original, English-language, 9:16 illustrated
 Reels; creates a caption, hashtags, and keywords; optionally adds an approved
-music track; and can publish through the Instagram Graph API. It does not use
-voiceover. Reach and virality cannot be guaranteed.
+music track; and saves the video and its details to Google Drive and Google
+Sheets for manual Instagram upload. It does not use voiceover. Reach and
+virality cannot be guaranteed.
 
-The GitHub Actions workflow runs at **7:00 PM India Standard Time** (13:30 UTC).
-GitHub scheduled jobs can start late. Scheduled publishing remains off until
-the repository variables `AUTO_PUBLISH_ENABLED` and `PILOT_APPROVED` are both
-set to `true`. A manual preview does not publish. A manual publish also requires
-`PILOT_APPROVED=true`.
+The GitHub Actions workflow runs daily at **7:00 PM India Standard Time**
+(13:30 UTC). GitHub scheduled jobs can start late. You can also start a run
+manually from the Actions tab.
 
 ## What runs each day
 
@@ -20,52 +19,62 @@ set to `true`. A manual preview does not publish. A manual publish also requires
 2. The workflow selects an approved BGM track from `music/playlist.json`,
    renders a 40-second 1080×1920 H.264 MP4, and saves the Reel and episode JSON
    as a GitHub Actions artifact.
-3. If publishing is explicitly enabled, the runner uploads the video to a
-   publicly readable R2 URL, waits for Instagram to finish processing, and
-   publishes the Reel with the generated caption and hashtags.
+3. The video is uploaded to your Google Drive folder. A row is added to the
+   Google Sheet with the video name, topic, caption, hashtags, SEO keywords,
+   Drive link, date, and episode number. Re-running the same episode updates
+   its existing Drive file and spreadsheet row rather than adding duplicates.
 
-Without a cleared BGM track, preview runs are silent; a publishing run is
-blocked. A public video URL is needed because Instagram fetches the media from
-the host. Keep Instagram tokens, Cloudflare credentials, and OpenAI keys in
-GitHub Actions secrets, never in the repository or generated artifacts.
+Without a cleared BGM track, videos render silently. Hashtags and keywords are
+selected for relevance and discoverability; no tool can guarantee virality.
 
 ## One-time setup
 
-### 1. Add GitHub Actions secrets
+### 1. Set up Google access
 
-In the repository, open **Settings → Secrets and variables → Actions → New
-repository secret** and add:
+1. In Google Cloud Console, create or select a project and enable the **Google
+   Drive API** and **Google Sheets API**.
+2. Configure the Google Auth Platform consent screen for your Google account
+   and create an OAuth client with application type **Desktop app**. Download
+   its JSON file. Do not commit or share the file.
+3. From this repository on your computer, run:
+
+   ```powershell
+   npm ci
+   npm run setup:google -- "C:\path\to\client_secret.json"
+   ```
+
+4. Open the authorization URL printed in the terminal and approve access with
+   the personal Google account where you want the videos saved. The setup
+   creates a `Stories That Stay Reels` folder and spreadsheet, then writes the
+   credential values and IDs to the ignored local file
+   `google-oauth-secrets.json`. Keep it private.
+
+The workflow uses your Google OAuth authorization, not your Google password.
+The scope is limited to files created by this app and spreadsheet access.
+Google refresh tokens for OAuth apps left in **Testing** expire after seven
+days. Before relying on daily automation, review the app's publishing status
+and Google's verification requirements in Google Cloud Console.
+
+### 2. Add GitHub Actions secrets and variables
+
+In the repository, open **Settings → Secrets and variables → Actions**.
+Under **Secrets**, add:
 
 | Secret | Value |
 |---|---|
 | `OPENAI_API_KEY` | An OpenAI API key with API billing enabled |
-| `IG_USER_ID` | Instagram Professional account ID for Graph API publishing |
-| `IG_ACCESS_TOKEN` | Meta access token with the required Instagram publishing permissions |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID that owns the R2 bucket |
-| `R2_BUCKET` | R2 bucket name |
-| `R2_ACCESS_KEY_ID` | R2 S3-compatible access key ID |
-| `R2_SECRET_ACCESS_KEY` | Matching R2 S3-compatible secret |
+| `GOOGLE_CLIENT_ID` | `GOOGLE_CLIENT_ID` from `google-oauth-secrets.json` |
+| `GOOGLE_CLIENT_SECRET` | `GOOGLE_CLIENT_SECRET` from `google-oauth-secrets.json` |
+| `GOOGLE_REFRESH_TOKEN` | `GOOGLE_REFRESH_TOKEN` from `google-oauth-secrets.json` |
 
-Use the official Meta Instagram API setup for a Professional (Creator or
-Business) account linked to a Facebook Page. Meta permissions, app review,
-token lifetime, and account eligibility are controlled by Meta. Set the
-`META_GRAPH_API_VERSION` Actions variable to a currently supported version.
-
-### 2. Add GitHub Actions variables
-
-Open **Settings → Secrets and variables → Actions → Variables** and add:
+Under **Variables**, add:
 
 | Variable | Value |
 |---|---|
-| `META_GRAPH_API_VERSION` | Current supported Graph API version, such as `vNN.N` |
-| `R2_PUBLIC_BASE_URL` | HTTPS base URL for the public R2 custom domain or public bucket URL |
-| `AUTO_PUBLISH_ENABLED` | Leave unset or `false` until the pilot is approved |
-| `PILOT_APPROVED` | Leave unset or `false` until you approve the rendered pilot |
+| `GOOGLE_DRIVE_FOLDER_ID` | `GOOGLE_DRIVE_FOLDER_ID` from `google-oauth-secrets.json` |
+| `GOOGLE_SHEET_ID` | `GOOGLE_SHEET_ID` from `google-oauth-secrets.json` |
 | `OPENAI_MODEL` | Optional; defaults to `gpt-4o-mini` |
 | `EPISODE_START_DATE` | Optional India-local start date in `YYYY-MM-DD`; defaults to `2026-10-31` |
-
-Configure R2 so the uploaded objects can be fetched via
-`R2_PUBLIC_BASE_URL`. Do not expose the S3 access key in the public URL.
 
 ### 3. Add BGM and confirm its rights
 
@@ -75,24 +84,17 @@ Put each approved audio file in `music/` and add a corresponding entry to
 `repositoryStorageAllowed: true`, `hostedDeliveryAllowed: true`,
 `rightsVerified: true`, and `attribution` (an array; use an empty array if none
 is required). The rights must cover Instagram use, storage in GitHub, and
-delivery from R2. The publisher appends required attribution to the Instagram
-caption. A track's presence in a public GitHub repository does not by itself
-grant usage rights. Read `music/README.md` before adding tracks.
+delivery from Google Drive. A track's presence in a public GitHub repository
+does not by itself grant usage rights. Read `music/README.md` before adding
+tracks.
 
-### 4. Preview, review, then enable publishing
+### 4. Generate and manually upload
 
-1. Open **Actions → Daily Instagram Reel → Run workflow** and leave
-   **Publish to Instagram** unchecked.
-2. Download the `reel-<run id>` artifact and review the MP4, episode, caption,
-   hashtags, keywords, and BGM rights.
-3. Only after approving the pilot, set `PILOT_APPROVED=true`. Then configure
-   and test the Meta and R2 setup with a deliberate manual publish.
-4. Enable daily posting by setting `AUTO_PUBLISH_ENABLED=true`.
-
-To pause scheduled publishing, unset `AUTO_PUBLISH_ENABLED` or change it to
-`false`. A manual workflow run can still produce a preview. Do not enable the
-schedule until credentials, a cleared BGM track, public R2 access, and Meta
-publishing access have all been tested.
+Open **Actions → Daily Reel Delivery** to run it manually or review the daily
+run. Each successful run uploads the video and its metadata to Drive and
+updates the spreadsheet. Open the Drive link in the sheet, download the MP4,
+and upload it to Instagram yourself using the caption and hashtags from the
+same row.
 
 ## Local checks
 
@@ -100,9 +102,9 @@ publishing access have all been tested.
 npm ci
 npm run generate
 npm run prepare:render
-npx remotion render src/index.tsx StoriesThatStay out/reel.mp4 --props out/render-props.json
+npm exec -- remotion render src/index.tsx StoriesThatStay out/reel.mp4 --props out/render-props.json
 ```
 
 `npm run generate` requires `OPENAI_API_KEY`; `npm run prepare:render` can
-produce a silent preview with an empty playlist. Instagram
-publishing is performed only by the explicit GitHub Actions publish path.
+produce a silent preview with an empty playlist. `npm run deliver` requires
+the Google service-account JSON and Drive/Sheet IDs described above.
