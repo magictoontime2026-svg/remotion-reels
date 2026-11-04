@@ -105,7 +105,7 @@ const response = await fetch('https://api.openai.com/v1/chat/completions', {
 			},
 			{
 				role: 'user',
-				content: `Create episode ${episodeNumber} of the series "${series}" for ${today}. Series premise: ${brief} Create a complete story for a 40-second Reel in exactly five sequential scenes. The first scene is a compelling hook, the final scene resolves the story and gives a gentle, natural invitation to share a memory (not a demand). Each scene line should be 5-12 words, readable on a 9:16 screen; its note should be 4-12 words. Use original fictional characters, no voiceover. Caption should be concise and include one genuine question. Provide 5-8 relevant, non-spammy Instagram hashtags and 5-8 descriptive keywords. Set episode to ${episodeNumber}.`,
+				content: `Create episode ${episodeNumber} of the series "${series}" for ${today}. Series premise: ${brief} Create a complete story for a 40-second YouTube Short in exactly five sequential scenes. The first scene is a compelling hook, the final scene resolves the story and gives a gentle, natural invitation to share a memory (not a demand). Each scene line should be 5-12 words, readable on a 9:16 screen; its note should be 4-12 words. Use original fictional characters, no voiceover. Caption should be concise and include one genuine question. Provide 5-8 relevant, non-spammy YouTube hashtags and 5-8 descriptive keywords. Set episode to ${episodeNumber}.`,
 			},
 		],
 	}),

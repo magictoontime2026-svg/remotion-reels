@@ -57,5 +57,5 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload Reel to Google Drive and update spreadsheet
+      - name: Publish YouTube Short and save to Drive and Sheet
         run: node scripts/deliver-to-google.mjs

@@ -1,7 +1,6 @@
 import {copyFile, mkdir, readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 
-const shouldPublish = process.env.SHOULD_PUBLISH === 'true';
 const playlistPath = path.resolve('music/playlist.json');
 const episodePath = path.resolve('out/episode.json');
 const outputDirectory = path.resolve('out');
@@ -16,12 +15,6 @@ if (!Array.isArray(playlist.tracks)) {
 const tracks = playlist.tracks;
 let bgmSrc = null;
 
-if (tracks.length === 0 && shouldPublish) {
-	throw new Error(
-		'Publishing is blocked: add at least one approved, Instagram-cleared BGM track to music/playlist.json.',
-	);
-}
-
 if (tracks.length > 0) {
 	const track = tracks[(episode.episode - 1) % tracks.length];
 	if (
@@ -30,9 +23,9 @@ if (tracks.length > 0) {
 		typeof track.sourceUrl !== 'string' ||
 		typeof track.license !== 'string' ||
 		typeof track.proofUrl !== 'string' ||
-		track.instagramReelsAllowed !== true ||
 		track.repositoryStorageAllowed !== true ||
-		track.hostedDeliveryAllowed !== true ||
+		track.youtubeShortsAllowed !== true ||
+		track.driveStorageAllowed !== true ||
 		track.rightsVerified !== true ||
 		!Array.isArray(track.attribution)
 	) {
@@ -68,5 +61,5 @@ await writeFile(
 	`${JSON.stringify({episode, bgmSrc}, null, 2)}\n`,
 );
 console.log(
-	bgmSrc ? `Selected cleared BGM: ${episode.music.title}` : 'Preview will render without BGM.',
+	bgmSrc ? `Selected cleared BGM: ${episode.music.title}` : 'Rendering without BGM.',
 );

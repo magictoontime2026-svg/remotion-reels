@@ -50,6 +50,7 @@ authUrl.search = new URLSearchParams({
 	scope: [
 		'https://www.googleapis.com/auth/drive.file',
 		'https://www.googleapis.com/auth/spreadsheets',
+		'https://www.googleapis.com/auth/youtube.upload',
 	].join(' '),
 	access_type: 'offline',
 	prompt: 'consent',
@@ -158,6 +159,16 @@ const googleRequest = async (url, options = {}) => {
 };
 
 const folderName = 'Stories That Stay Reels';
+const secretFilePath = path.resolve('google-oauth-secrets.json');
+let existingCredentials = null;
+try {
+	existingCredentials = JSON.parse(await readFile(secretFilePath, 'utf8'));
+} catch (error) {
+	if (error.code !== 'ENOENT') {
+		throw new Error(`Could not read existing Google credentials: ${error.message}`);
+	}
+}
+
 const folderQuery = new URLSearchParams({
 	q: `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
 	fields: 'files(id,name,webViewLink)',
@@ -185,17 +196,26 @@ if (typeof folder.id !== 'string') {
 	throw new Error('Google Drive returned no folder ID.');
 }
 
-const spreadsheet = await googleRequest(
-	'https://sheets.googleapis.com/v4/spreadsheets',
-	{
-		method: 'POST',
-		headers: {'Content-Type': 'application/json'},
-		body: JSON.stringify({
-			properties: {title: 'Stories That Stay Content Calendar'},
-			sheets: [{properties: {title: 'Reels'}}],
-		}),
-	},
-);
+const existingSpreadsheetId =
+	existingCredentials?.GOOGLE_CLIENT_ID === oauthClient.client_id &&
+	typeof existingCredentials.GOOGLE_SHEET_ID === 'string'
+		? existingCredentials.GOOGLE_SHEET_ID
+		: null;
+const spreadsheet = existingSpreadsheetId
+	? await googleRequest(
+			`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(existingSpreadsheetId)}?fields=spreadsheetId,spreadsheetUrl`,
+		)
+	: await googleRequest(
+			'https://sheets.googleapis.com/v4/spreadsheets',
+			{
+				method: 'POST',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify({
+					properties: {title: 'Stories That Stay Content Calendar'},
+					sheets: [{properties: {title: 'Reels'}}],
+				}),
+			},
+		);
 if (typeof spreadsheet.spreadsheetId !== 'string') {
 	throw new Error('Google Sheets returned no spreadsheet ID.');
 }
@@ -212,7 +232,6 @@ await googleRequest(
 	{method: 'PATCH'},
 );
 
-const secretFilePath = path.resolve('google-oauth-secrets.json');
 await writeFile(
 	secretFilePath,
 	`${JSON.stringify(
